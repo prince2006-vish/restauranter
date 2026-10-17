@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 
 const AdminLogin = () => {
   const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('AdminPassword123!');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const { adminLogin, isAdminAuthenticated } = useAuth();
