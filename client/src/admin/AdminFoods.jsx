@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Plus,
   Search,
@@ -10,11 +10,11 @@ import {
   AlertTriangle,
   Flame,
   Image as ImageIcon,
-} from 'lucide-react';
-import api from '../services/api';
-import VegBadge from '../components/VegBadge';
-import { useSettings } from '../context/SettingsContext';
-import toast from 'react-hot-toast';
+} from "lucide-react";
+import api from "../services/api";
+import VegBadge from "../components/VegBadge";
+import { useSettings } from "../context/SettingsContext";
+import toast from "react-hot-toast";
 
 const AdminFoods = () => {
   const [foods, setFoods] = useState([]);
@@ -22,26 +22,26 @@ const AdminFoods = () => {
   const [loading, setLoading] = useState(true);
 
   // Filter states
-  const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [availabilityFilter, setAvailabilityFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [availabilityFilter, setAvailabilityFilter] = useState("all");
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFood, setEditingFood] = useState(null);
   const [formData, setFormData] = useState({
-    name: '',
-    shortDescription: '',
-    fullDescription: '',
-    price: '',
-    discountPrice: '',
-    category: '',
-    image: '',
+    name: "",
+    shortDescription: "",
+    fullDescription: "",
+    price: "",
+    discountPrice: "",
+    category: "",
+    image: "",
     isVeg: true,
-    availability: 'available',
+    availability: "available",
     isFeatured: false,
-    prepTime: '15-20 mins',
-    tags: '',
+    prepTime: "15-20 mins",
+    tags: "",
   });
 
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -49,19 +49,49 @@ const AdminFoods = () => {
   const [saving, setSaving] = useState(false);
 
   const { settings } = useSettings();
-  const currency = settings.currencySymbol || '₹';
+  const currency = settings.currencySymbol || "₹";
 
   const fetchFoodsAndCategories = async () => {
     setLoading(true);
+
     try {
-      const [foodsRes, catsRes] = await Promise.all([
-        api.get('/foods/admin'),
-        api.get('/categories/admin'),
+      const foodsPromise = api.get("/foods/admin");
+      const categoriesPromise = api.get("/categories/admin");
+
+      const [foodsResult, categoriesResult] = await Promise.allSettled([
+        foodsPromise,
+        categoriesPromise,
       ]);
-      if (foodsRes.data.success) setFoods(foodsRes.data.data);
-      if (catsRes.data.success) setCategories(catsRes.data.data);
-    } catch (err) {
-      console.error('Error fetching foods/categories:', err);
+
+      if (foodsResult.status === "fulfilled") {
+        const response = foodsResult.value.data;
+
+        if (response.success) {
+          setFoods(response.data || []);
+        }
+      } else {
+        console.error("Foods API error:", foodsResult.reason);
+      }
+
+      if (categoriesResult.status === "fulfilled") {
+        const response = categoriesResult.value.data;
+
+        if (response.success) {
+          setCategories(response.data || []);
+        } else {
+          console.error("Categories API returned failure:", response);
+          toast.error("Categories could not be loaded");
+        }
+      } else {
+        console.error(
+          "Categories API error:",
+          categoriesResult.reason?.response?.status,
+          categoriesResult.reason?.response?.data ||
+            categoriesResult.reason?.message,
+        );
+
+        toast.error("Failed to load categories. Please refresh.");
+      }
     } finally {
       setLoading(false);
     }
@@ -74,18 +104,18 @@ const AdminFoods = () => {
   const handleOpenAddModal = () => {
     setEditingFood(null);
     setFormData({
-      name: '',
-      shortDescription: '',
-      fullDescription: '',
-      price: '',
-      discountPrice: '',
-      category: categories[0]?._id || '',
-      image: '',
+      name: "",
+      shortDescription: "",
+      fullDescription: "",
+      price: "",
+      discountPrice: "",
+      category: categories[0]?._id || "",
+      image: "",
       isVeg: true,
-      availability: 'available',
+      availability: "available",
       isFeatured: false,
-      prepTime: '15-20 mins',
-      tags: '',
+      prepTime: "15-20 mins",
+      tags: "",
     });
     setIsModalOpen(true);
   };
@@ -95,16 +125,16 @@ const AdminFoods = () => {
     setFormData({
       name: food.name,
       shortDescription: food.shortDescription,
-      fullDescription: food.fullDescription || '',
+      fullDescription: food.fullDescription || "",
       price: food.price.toString(),
-      discountPrice: food.discountPrice ? food.discountPrice.toString() : '',
+      discountPrice: food.discountPrice ? food.discountPrice.toString() : "",
       category: food.category?._id || food.category,
       image: food.image,
       isVeg: food.isVeg,
       availability: food.availability,
       isFeatured: food.isFeatured,
-      prepTime: food.prepTime || '15-20 mins',
-      tags: Array.isArray(food.tags) ? food.tags.join(', ') : '',
+      prepTime: food.prepTime || "15-20 mins",
+      tags: Array.isArray(food.tags) ? food.tags.join(", ") : "",
     });
     setIsModalOpen(true);
   };
@@ -115,24 +145,24 @@ const AdminFoods = () => {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size must be less than 5MB');
+      toast.error("Image size must be less than 5MB");
       return;
     }
 
     const uploadData = new FormData();
-    uploadData.append('image', file);
+    uploadData.append("image", file);
 
     setUploadingImage(true);
     try {
-      const res = await api.post('/upload', uploadData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      const res = await api.post("/upload", uploadData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
       if (res.data.success) {
         setFormData((prev) => ({ ...prev, image: res.data.url }));
-        toast.success('Food image uploaded successfully!');
+        toast.success("Food image uploaded successfully!");
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to upload image');
+      toast.error(err.response?.data?.message || "Failed to upload image");
     } finally {
       setUploadingImage(false);
     }
@@ -140,8 +170,16 @@ const AdminFoods = () => {
 
   const handleSaveFood = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.shortDescription || !formData.price || !formData.category || !formData.image) {
-      toast.error('Please fill all required food fields including image and category');
+    if (
+      !formData.name ||
+      !formData.shortDescription ||
+      !formData.price ||
+      !formData.category ||
+      !formData.image
+    ) {
+      toast.error(
+        "Please fill all required food fields including image and category",
+      );
       return;
     }
 
@@ -150,26 +188,28 @@ const AdminFoods = () => {
       const payload = {
         ...formData,
         price: Number(formData.price),
-        discountPrice: formData.discountPrice ? Number(formData.discountPrice) : null,
+        discountPrice: formData.discountPrice
+          ? Number(formData.discountPrice)
+          : null,
       };
 
       if (editingFood) {
         const res = await api.put(`/foods/admin/${editingFood._id}`, payload);
         if (res.data.success) {
-          toast.success('Food item updated successfully!');
+          toast.success("Food item updated successfully!");
           setIsModalOpen(false);
           fetchFoodsAndCategories();
         }
       } else {
-        const res = await api.post('/foods/admin', payload);
+        const res = await api.post("/foods/admin", payload);
         if (res.data.success) {
-          toast.success('Food item created successfully!');
+          toast.success("Food item created successfully!");
           setIsModalOpen(false);
           fetchFoodsAndCategories();
         }
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to save food');
+      toast.error(err.response?.data?.message || "Failed to save food");
     } finally {
       setSaving(false);
     }
@@ -180,36 +220,43 @@ const AdminFoods = () => {
     try {
       const res = await api.delete(`/foods/admin/${deleteConfirmation._id}`);
       if (res.data.success) {
-        toast.success('Food item deleted successfully');
+        toast.success("Food item deleted successfully");
         setDeleteConfirmation(null);
         fetchFoodsAndCategories();
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to delete food');
+      toast.error(err.response?.data?.message || "Failed to delete food");
     }
   };
 
   const handleQuickAvailabilityToggle = async (food, newStatus) => {
     try {
-      const res = await api.patch(`/foods/admin/${food._id}/availability`, { availability: newStatus });
+      const res = await api.patch(`/foods/admin/${food._id}/availability`, {
+        availability: newStatus,
+      });
       if (res.data.success) {
         toast.success(`${food.name} is now ${newStatus}`);
-        setFoods((prev) => prev.map((f) => (f._id === food._id ? { ...f, availability: newStatus } : f)));
+        setFoods((prev) =>
+          prev.map((f) =>
+            f._id === food._id ? { ...f, availability: newStatus } : f,
+          ),
+        );
       }
     } catch (err) {
-      toast.error('Failed to change availability');
+      toast.error("Failed to change availability");
     }
   };
 
   const filteredFoods = foods.filter((f) => {
     const matchesSearch =
-      searchQuery === '' ||
+      searchQuery === "" ||
       f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       f.shortDescription.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory =
-      categoryFilter === 'all' || (f.category?._id || f.category) === categoryFilter;
+      categoryFilter === "all" ||
+      (f.category?._id || f.category) === categoryFilter;
     const matchesAvailability =
-      availabilityFilter === 'all' || f.availability === availabilityFilter;
+      availabilityFilter === "all" || f.availability === availabilityFilter;
     return matchesSearch && matchesCategory && matchesAvailability;
   });
 
@@ -218,9 +265,12 @@ const AdminFoods = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-serif text-2xl font-bold text-[#12372A]">Menu & Food Management</h1>
+          <h1 className="font-serif text-2xl font-bold text-[#12372A]">
+            Menu & Food Management
+          </h1>
           <p className="text-xs text-stone-500 mt-0.5">
-            Create, update, upload photography, and adjust inventory availability ({foods.length} dishes total)
+            Create, update, upload photography, and adjust inventory
+            availability ({foods.length} dishes total)
           </p>
         </div>
         <button
@@ -266,17 +316,26 @@ const AdminFoods = () => {
           <option value="all">All Availability</option>
           <option value="available">Available</option>
           <option value="out_of_stock">Out of Stock</option>
-          <option value="temporarily_unavailable">Temporarily Unavailable</option>
+          <option value="temporarily_unavailable">
+            Temporarily Unavailable
+          </option>
         </select>
       </div>
 
       {/* Foods Grid */}
       {loading ? (
-        <div className="py-20 text-center text-xs text-stone-500">Loading dishes catalogue...</div>
+        <div className="py-20 text-center text-xs text-stone-500">
+          Loading dishes catalogue...
+        </div>
       ) : filteredFoods.length === 0 ? (
         <div className="py-20 bg-white rounded-2xl border border-stone-200 text-center p-8 space-y-3">
-          <p className="text-xs text-stone-500">No dishes match your search criteria.</p>
-          <button onClick={handleOpenAddModal} className="px-4 py-2 bg-[#12372A] text-white text-xs font-bold rounded-xl">
+          <p className="text-xs text-stone-500">
+            No dishes match your search criteria.
+          </p>
+          <button
+            onClick={handleOpenAddModal}
+            className="px-4 py-2 bg-[#12372A] text-white text-xs font-bold rounded-xl"
+          >
             Add Your First Dish
           </button>
         </div>
@@ -310,12 +369,16 @@ const AdminFoods = () => {
                   <span>Status:</span>
                   <select
                     value={food.availability}
-                    onChange={(e) => handleQuickAvailabilityToggle(food, e.target.value)}
+                    onChange={(e) =>
+                      handleQuickAvailabilityToggle(food, e.target.value)
+                    }
                     className="bg-stone-900 text-white rounded-md px-1.5 py-0.5 text-[10px] font-bold focus:outline-none"
                   >
                     <option value="available">Available</option>
                     <option value="out_of_stock">Out of Stock</option>
-                    <option value="temporarily_unavailable">Temp. Paused</option>
+                    <option value="temporarily_unavailable">
+                      Temp. Paused
+                    </option>
                   </select>
                 </div>
               </div>
@@ -328,14 +391,15 @@ const AdminFoods = () => {
                       {food.name}
                     </h3>
                     <span className="font-bold text-sm text-[#12372A] shrink-0">
-                      {currency}{food.discountPrice || food.price}
+                      {currency}
+                      {food.discountPrice || food.price}
                     </span>
                   </div>
                   <p className="text-xs text-stone-500 line-clamp-2 mt-1">
                     {food.shortDescription}
                   </p>
                   <span className="text-[10px] font-semibold text-stone-400 block mt-2">
-                    Category: {food.category?.name || 'Uncategorized'}
+                    Category: {food.category?.name || "Uncategorized"}
                   </span>
                 </div>
 
@@ -369,9 +433,14 @@ const AdminFoods = () => {
           <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-4 border-b border-stone-100">
               <h3 className="font-serif text-xl font-bold text-[#12372A]">
-                {editingFood ? `Edit Dish: ${editingFood.name}` : 'Add New Food Item'}
+                {editingFood
+                  ? `Edit Dish: ${editingFood.name}`
+                  : "Add New Food Item"}
               </h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-stone-400 hover:text-stone-800 font-bold text-lg">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-stone-400 hover:text-stone-800 font-bold text-lg"
+              >
                 ✕
               </button>
             </div>
@@ -379,48 +448,67 @@ const AdminFoods = () => {
             <form onSubmit={handleSaveFood} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-stone-700 mb-1">Food Name *</label>
+                  <label className="block text-xs font-semibold text-stone-700 mb-1">
+                    Food Name *
+                  </label>
                   <input
                     type="text"
                     required
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
                     placeholder="e.g. Paneer Tikka Angara"
                     className="w-full px-3.5 py-2 text-xs rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-[#12372A]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-stone-700 mb-1">Regular Price (₹) *</label>
+                  <label className="block text-xs font-semibold text-stone-700 mb-1">
+                    Regular Price (₹) *
+                  </label>
                   <input
                     type="number"
                     required
                     min="0"
                     value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, price: e.target.value })
+                    }
                     placeholder="290"
                     className="w-full px-3.5 py-2 text-xs rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-[#12372A]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-stone-700 mb-1">Discounted Price (₹, Optional)</label>
+                  <label className="block text-xs font-semibold text-stone-700 mb-1">
+                    Discounted Price (₹, Optional)
+                  </label>
                   <input
                     type="number"
                     min="0"
                     value={formData.discountPrice}
-                    onChange={(e) => setFormData({ ...formData, discountPrice: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        discountPrice: e.target.value,
+                      })
+                    }
                     placeholder="260"
                     className="w-full px-3.5 py-2 text-xs rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-[#12372A]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-stone-700 mb-1">Category *</label>
+                  <label className="block text-xs font-semibold text-stone-700 mb-1">
+                    Category *
+                  </label>
                   <select
                     required
                     value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, category: e.target.value })
+                    }
                     className="w-full px-3.5 py-2 text-xs rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-[#12372A]"
                   >
                     <option value="">Select Category</option>
@@ -433,14 +521,18 @@ const AdminFoods = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-stone-700 mb-1">Food Type *</label>
+                  <label className="block text-xs font-semibold text-stone-700 mb-1">
+                    Food Type *
+                  </label>
                   <div className="flex items-center gap-4 pt-1.5">
                     <label className="flex items-center gap-1.5 text-xs cursor-pointer">
                       <input
                         type="radio"
                         name="vegType"
                         checked={formData.isVeg === true}
-                        onChange={() => setFormData({ ...formData, isVeg: true })}
+                        onChange={() =>
+                          setFormData({ ...formData, isVeg: true })
+                        }
                       />
                       <span>Vegetarian</span>
                     </label>
@@ -449,7 +541,9 @@ const AdminFoods = () => {
                         type="radio"
                         name="vegType"
                         checked={formData.isVeg === false}
-                        onChange={() => setFormData({ ...formData, isVeg: false })}
+                        onChange={() =>
+                          setFormData({ ...formData, isVeg: false })
+                        }
                       />
                       <span>Non-Vegetarian</span>
                     </label>
@@ -459,23 +553,37 @@ const AdminFoods = () => {
 
               {/* Descriptions */}
               <div>
-                <label className="block text-xs font-semibold text-stone-700 mb-1">Short Description *</label>
+                <label className="block text-xs font-semibold text-stone-700 mb-1">
+                  Short Description *
+                </label>
                 <input
                   type="text"
                   required
                   value={formData.shortDescription}
-                  onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      shortDescription: e.target.value,
+                    })
+                  }
                   placeholder="One sentence summary of the dish..."
                   className="w-full px-3.5 py-2 text-xs rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-[#12372A]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-700 mb-1">Full Detailed Description</label>
+                <label className="block text-xs font-semibold text-stone-700 mb-1">
+                  Full Detailed Description
+                </label>
                 <textarea
                   rows="2"
                   value={formData.fullDescription}
-                  onChange={(e) => setFormData({ ...formData, fullDescription: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      fullDescription: e.target.value,
+                    })
+                  }
                   placeholder="Preparation style, marinades, heritage notes..."
                   className="w-full px-3.5 py-2 text-xs rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-[#12372A]"
                 />
@@ -483,7 +591,9 @@ const AdminFoods = () => {
 
               {/* Image Upload or URL */}
               <div className="space-y-2 p-3 bg-stone-50 rounded-2xl border border-stone-200">
-                <label className="block text-xs font-semibold text-stone-700">Food Photography Image *</label>
+                <label className="block text-xs font-semibold text-stone-700">
+                  Food Photography Image *
+                </label>
                 <div className="flex flex-col sm:flex-row gap-3 items-center">
                   {formData.image && (
                     <img
@@ -496,13 +606,19 @@ const AdminFoods = () => {
                     <input
                       type="text"
                       value={formData.image}
-                      onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, image: e.target.value })
+                      }
                       placeholder="Paste image URL or upload from disk..."
                       className="w-full px-3 py-1.5 text-xs rounded-xl border border-stone-300 bg-white"
                     />
                     <label className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-stone-200 hover:bg-stone-300 text-stone-800 text-xs font-semibold rounded-lg cursor-pointer">
                       <Upload className="w-3.5 h-3.5" />
-                      <span>{uploadingImage ? 'Uploading image...' : 'Choose from computer'}</span>
+                      <span>
+                        {uploadingImage
+                          ? "Uploading image..."
+                          : "Choose from computer"}
+                      </span>
                       <input
                         type="file"
                         accept="image/*"
@@ -518,22 +634,30 @@ const AdminFoods = () => {
               {/* Prep time & Tags */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-stone-700 mb-1">Prep Time</label>
+                  <label className="block text-xs font-semibold text-stone-700 mb-1">
+                    Prep Time
+                  </label>
                   <input
                     type="text"
                     value={formData.prepTime}
-                    onChange={(e) => setFormData({ ...formData, prepTime: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, prepTime: e.target.value })
+                    }
                     placeholder="15-20 mins"
                     className="w-full px-3.5 py-2 text-xs rounded-xl border border-stone-300"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-stone-700 mb-1">Tags (comma-separated)</label>
+                  <label className="block text-xs font-semibold text-stone-700 mb-1">
+                    Tags (comma-separated)
+                  </label>
                   <input
                     type="text"
                     value={formData.tags}
-                    onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, tags: e.target.value })
+                    }
                     placeholder="bestseller, tandoori, claypot"
                     className="w-full px-3.5 py-2 text-xs rounded-xl border border-stone-300"
                   />
@@ -546,22 +670,30 @@ const AdminFoods = () => {
                   <input
                     type="checkbox"
                     checked={formData.isFeatured}
-                    onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, isFeatured: e.target.checked })
+                    }
                     className="rounded-sm text-[#12372A]"
                   />
                   <span>Mark as Chef's Pick / Featured on Homepage</span>
                 </label>
 
                 <div className="flex items-center gap-2 text-xs">
-                  <span className="font-semibold text-stone-700">Initial Availability:</span>
+                  <span className="font-semibold text-stone-700">
+                    Initial Availability:
+                  </span>
                   <select
                     value={formData.availability}
-                    onChange={(e) => setFormData({ ...formData, availability: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, availability: e.target.value })
+                    }
                     className="px-2 py-1 text-xs rounded-lg border border-stone-300"
                   >
                     <option value="available">Available</option>
                     <option value="out_of_stock">Out of Stock</option>
-                    <option value="temporarily_unavailable">Temporarily Unavailable</option>
+                    <option value="temporarily_unavailable">
+                      Temporarily Unavailable
+                    </option>
                   </select>
                 </div>
               </div>
@@ -580,7 +712,11 @@ const AdminFoods = () => {
                   disabled={saving}
                   className="px-5 py-2 text-xs font-bold bg-[#12372A] hover:bg-[#1F4D3C] text-white rounded-xl shadow-xs"
                 >
-                  {saving ? 'Saving...' : editingFood ? 'Save Changes' : 'Create Food Item'}
+                  {saving
+                    ? "Saving..."
+                    : editingFood
+                      ? "Save Changes"
+                      : "Create Food Item"}
                 </button>
               </div>
             </form>
@@ -595,9 +731,13 @@ const AdminFoods = () => {
             <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
               <AlertTriangle className="w-6 h-6" />
             </div>
-            <h3 className="font-serif text-lg font-bold text-stone-900">Delete Food Item?</h3>
+            <h3 className="font-serif text-lg font-bold text-stone-900">
+              Delete Food Item?
+            </h3>
             <p className="text-xs text-stone-500">
-              Are you sure you want to delete <strong>"{deleteConfirmation.name}"</strong>? This will remove it from the customer menu permanently.
+              Are you sure you want to delete{" "}
+              <strong>"{deleteConfirmation.name}"</strong>? This will remove it
+              from the customer menu permanently.
             </p>
             <div className="flex items-center justify-center gap-3 pt-2">
               <button
