@@ -148,9 +148,9 @@ const Navbar = () => {
             <Link
               to={isAdminAuthenticated ? "/admin/dashboard" : "/admin/login"}
               title="Admin Portal"
-              className="p-2 text-stone-400 hover:text-[#12372A] hover:bg-stone-100 rounded-lg transition-colors"
+              className="p-2 text-stone-400 flex gap-0.5 hover:text-[#12372A] hover:bg-stone-100 rounded-lg transition-colors border-stone-200 border-b-2 bg-gray-50"
             >
-              <Shield className="w-4 h-4" />
+              <Shield className="w-4 h-4" /> Admin Panel
             </Link>
           </div>
 
