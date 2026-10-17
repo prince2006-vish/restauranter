@@ -53,45 +53,15 @@ const AdminFoods = () => {
 
   const fetchFoodsAndCategories = async () => {
     setLoading(true);
-
     try {
-      const foodsPromise = api.get("/foods/admin");
-      const categoriesPromise = api.get("/categories/admin");
-
-      const [foodsResult, categoriesResult] = await Promise.allSettled([
-        foodsPromise,
-        categoriesPromise,
+      const [foodsRes, catsRes] = await Promise.all([
+        api.get("/foods/admin"),
+        api.get("/categories/admin"),
       ]);
-
-      if (foodsResult.status === "fulfilled") {
-        const response = foodsResult.value.data;
-
-        if (response.success) {
-          setFoods(response.data || []);
-        }
-      } else {
-        console.error("Foods API error:", foodsResult.reason);
-      }
-
-      if (categoriesResult.status === "fulfilled") {
-        const response = categoriesResult.value.data;
-
-        if (response.success) {
-          setCategories(response.data || []);
-        } else {
-          console.error("Categories API returned failure:", response);
-          toast.error("Categories could not be loaded");
-        }
-      } else {
-        console.error(
-          "Categories API error:",
-          categoriesResult.reason?.response?.status,
-          categoriesResult.reason?.response?.data ||
-            categoriesResult.reason?.message,
-        );
-
-        toast.error("Failed to load categories. Please refresh.");
-      }
+      if (foodsRes.data.success) setFoods(foodsRes.data.data);
+      if (catsRes.data.success) setCategories(catsRes.data.data);
+    } catch (err) {
+      console.error("Error fetching foods/categories:", err);
     } finally {
       setLoading(false);
     }
