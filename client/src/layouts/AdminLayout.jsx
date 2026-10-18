@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { Outlet, NavLink, useNavigate, Link } from "react-router-dom";
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -18,11 +18,11 @@ import {
   Bell,
   Volume2,
   VolumeX,
-} from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { useSocket } from '../context/SocketContext';
-import { useSettings } from '../context/SettingsContext';
-import toast from 'react-hot-toast';
+} from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { useSocket } from "../context/SocketContext";
+import { useSettings } from "../context/SettingsContext";
+import toast from "react-hot-toast";
 
 const AdminLayout = () => {
   const { admin, isAdminAuthenticated, adminLogout } = useAuth();
@@ -37,7 +37,7 @@ const AdminLayout = () => {
   // Protect Admin route
   useEffect(() => {
     if (!isAdminAuthenticated) {
-      navigate('/admin/login');
+      navigate("/admin/login");
     }
   }, [isAdminAuthenticated, navigate]);
 
@@ -49,7 +49,7 @@ const AdminLayout = () => {
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
 
-      osc.type = 'sine';
+      osc.type = "sine";
       osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
       osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.15); // A5
       gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
@@ -69,7 +69,7 @@ const AdminLayout = () => {
   useEffect(() => {
     if (!socket) return;
 
-    socket.emit('join_admin_room');
+    socket.emit("join_admin_room");
 
     const handleNewOrder = (data) => {
       setNewOrderAlerts((prev) => prev + 1);
@@ -78,29 +78,38 @@ const AdminLayout = () => {
         `🚨 New Order Received! #${data.orderNumber} by ${data.customerName} (₹${data.totalAmount})`,
         {
           duration: 6000,
-          icon: '🛎️',
-        }
+          icon: "🛎️",
+        },
       );
     };
 
-    socket.on('new_order_placed', handleNewOrder);
+    socket.on("new_order_placed", handleNewOrder);
 
     return () => {
-      socket.off('new_order_placed', handleNewOrder);
+      socket.off("new_order_placed", handleNewOrder);
     };
   }, [socket, soundEnabled]);
 
   const navItems = [
-    { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
-    { name: 'Live Orders', path: '/admin/orders', icon: ShoppingBag, badge: newOrderAlerts },
-    { name: 'Menu & Foods', path: '/admin/foods', icon: UtensilsCrossed },
-    { name: 'Food Categories', path: '/admin/categories', icon: Tags },
-    { name: 'Offers & Deals', path: '/admin/offers', icon: Percent },
-    { name: 'Gallery Photos', path: '/admin/gallery', icon: ImageIcon },
-    { name: 'Customer Reviews', path: '/admin/reviews', icon: Star },
-    { name: 'Customers', path: '/admin/customers', icon: Users },
-    { name: 'Website Settings', path: '/admin/website-settings', icon: Settings },
-    { name: 'Admin Profile', path: '/admin/profile', icon: UserCheck },
+    { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
+    {
+      name: "Live Orders",
+      path: "/admin/orders",
+      icon: ShoppingBag,
+      badge: newOrderAlerts,
+    },
+    { name: "Menu & Foods", path: "/admin/foods", icon: UtensilsCrossed },
+    { name: "Food Categories", path: "/admin/categories", icon: Tags },
+    { name: "Offers & Deals", path: "/admin/offers", icon: Percent },
+    { name: "Gallery Photos", path: "/admin/gallery", icon: ImageIcon },
+    { name: "Customer Reviews", path: "/admin/reviews", icon: Star },
+    { name: "Customers", path: "/admin/customers", icon: Users },
+    {
+      name: "Website Settings",
+      path: "/admin/website-settings",
+      icon: Settings,
+    },
+    { name: "Admin Profile", path: "/admin/profile", icon: UserCheck },
   ];
 
   if (!isAdminAuthenticated) {
@@ -108,7 +117,7 @@ const AdminLayout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-stone-100 flex text-stone-900 font-sans">
+    <div className="min-h-screen bg-stone-100 flex text-stone-900 font-sans h-screen overflow-hidden">
       {/* Sidebar for Desktop */}
       <aside className="hidden lg:flex flex-col w-64 bg-[#12372A] text-white shrink-0 border-r border-[#D4AF37]/20 shadow-xl">
         {/* Brand Banner */}
@@ -118,7 +127,7 @@ const AdminLayout = () => {
           </div>
           <div className="truncate">
             <span className="font-serif font-bold text-base text-white block truncate">
-              {settings.restaurantName || 'Meetha Pani'}
+              {settings.restaurantName || "Meetha Pani"}
             </span>
             <span className="text-[10px] uppercase tracking-wider text-[#D4AF37] font-semibold">
               Admin Control Panel
@@ -137,8 +146,8 @@ const AdminLayout = () => {
                 className={({ isActive }) =>
                   `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all ${
                     isActive
-                      ? 'bg-[#D4AF37] text-[#12372A] shadow-md font-bold'
-                      : 'text-stone-300 hover:bg-white/10 hover:text-white'
+                      ? "bg-[#D4AF37] text-[#12372A] shadow-md font-bold"
+                      : "text-stone-300 hover:bg-white/10 hover:text-white"
                   }`
                 }
               >
@@ -159,9 +168,15 @@ const AdminLayout = () => {
         {/* Footer info & Logout */}
         <div className="p-4 border-t border-white/10 space-y-2">
           <div className="px-3 py-2 bg-white/5 rounded-xl">
-            <span className="text-[10px] text-stone-400 block uppercase">Logged in as</span>
-            <span className="text-xs font-bold text-white block truncate">{admin?.fullName || 'Manager'}</span>
-            <span className="text-[10px] text-[#D4AF37] capitalize block">{admin?.role || 'admin'}</span>
+            <span className="text-[10px] text-stone-400 block uppercase">
+              Logged in as
+            </span>
+            <span className="text-xs font-bold text-white block truncate">
+              {admin?.fullName || "Manager"}
+            </span>
+            <span className="text-[10px] text-[#D4AF37] capitalize block">
+              {admin?.role || "admin"}
+            </span>
           </div>
           <button
             onClick={adminLogout}
@@ -194,9 +209,9 @@ const AdminLayout = () => {
             <button
               onClick={() => {
                 setSoundEnabled(!soundEnabled);
-                toast(`Order sound ${!soundEnabled ? 'enabled' : 'muted'}`);
+                toast(`Order sound ${!soundEnabled ? "enabled" : "muted"}`);
               }}
-              title={soundEnabled ? 'Sound alert enabled' : 'Sound alert muted'}
+              title={soundEnabled ? "Sound alert enabled" : "Sound alert muted"}
               className="p-2 rounded-xl text-stone-500 hover:bg-stone-100 transition-colors"
             >
               {soundEnabled ? (
@@ -219,7 +234,7 @@ const AdminLayout = () => {
 
             {/* Profile Avatar */}
             <div className="w-8 h-8 rounded-full bg-[#12372A] text-[#D4AF37] font-bold text-xs flex items-center justify-center">
-              {admin?.fullName ? admin.fullName.charAt(0) : 'A'}
+              {admin?.fullName ? admin.fullName.charAt(0) : "A"}
             </div>
           </div>
         </header>
@@ -233,11 +248,19 @@ const AdminLayout = () => {
       {/* Mobile Drawer */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setSidebarOpen(false)} />
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs"
+            onClick={() => setSidebarOpen(false)}
+          />
           <div className="relative w-64 max-w-xs bg-[#12372A] text-white flex flex-col z-10">
             <div className="h-16 flex items-center justify-between px-6 border-b border-white/10">
-              <span className="font-serif font-bold text-base text-white">Meetha Pani Admin</span>
-              <button onClick={() => setSidebarOpen(false)} className="text-stone-400 hover:text-white">
+              <span className="font-serif font-bold text-base text-white">
+                Meetha Pani Admin
+              </span>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="text-stone-400 hover:text-white"
+              >
                 <X className="w-6 h-6" />
               </button>
             </div>
@@ -252,8 +275,8 @@ const AdminLayout = () => {
                     className={({ isActive }) =>
                       `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold ${
                         isActive
-                          ? 'bg-[#D4AF37] text-[#12372A] font-bold'
-                          : 'text-stone-300 hover:bg-white/10'
+                          ? "bg-[#D4AF37] text-[#12372A] font-bold"
+                          : "text-stone-300 hover:bg-white/10"
                       }`
                     }
                   >
