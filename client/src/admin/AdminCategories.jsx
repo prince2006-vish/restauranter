@@ -217,7 +217,7 @@ const AdminCategories = () => {
                       {cat.isActive ? "Active" : "Inactive"}
                     </span>
                   </td>
-                  <td className="py-2.5 px-4 text-right space-x-2">
+                  <td className="py-2.5 px-4 text-right space-x-2 flex justify-end">
                     <button
                       onClick={() => handleOpenEditModal(cat)}
                       className="p-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700"
